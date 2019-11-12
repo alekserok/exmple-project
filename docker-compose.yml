@@ -1,0 +1,57 @@
+version: "3.1"
+services:
+
+    mariadb:
+      image: mariadb:10.4
+      container_name: example-mariadb
+      working_dir: /application
+      volumes:
+        - .:/application
+        - ./maria-data:/var/lib/mysql
+      environment:
+        - MYSQL_ROOT_PASSWORD=mySuperStrongPassword
+        - MYSQL_DATABASE=${DB_DATABASE}
+        - MYSQL_USER=${DB_USERNAME}
+        - MYSQL_PASSWORD=${DB_PASSWORD}
+      ports:
+        - "8083:3306"
+
+    webserver:
+      image: nginx:alpine
+      container_name: exapmle-webserver
+      working_dir: /application
+      volumes:
+          - .:/application
+          - ./phpdocker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      ports:
+       - "8080:80"
+
+    php-fpm:
+      build: phpdocker/php-fpm
+      container_name: example-php-fpm
+      working_dir: /application
+      volumes:
+        - .:/application
+        - ./phpdocker/php-fpm/php-ini-overrides.ini:/etc/php/7.3/fpm/conf.d/99-overrides.ini
+
+    adminer:
+      image: adminer
+      ports:
+        - "8081:8080"
+
+    redis:
+      image: redis:alpine
+      container_name: example-redis
+
+    node:
+      image: "node:latest"
+      container_name: example-node
+      working_dir: /application
+      environment:
+        - NODE_ENV=production
+        - LARAVEL_ECHO_SERVER_PORT=${ECHO_PORT}
+      volumes:
+        - .:/application
+      ports:
+        - "${ECHO_PORT}:${ECHO_PORT}"
+      command: bash -c "npm install && node_modules/laravel-echo-server/bin/server.js start"
